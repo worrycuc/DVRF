@@ -61,9 +61,17 @@ end
 
 function action_bandwidth(iface)
 	luci.http.prepare_content("application/json")
-
+    function filterKeywords(str)
+        local keywords = {"cat", "less", "more"}
+        
+        for _, keyword in ipairs(keywords) do
+          str = string.gsub(str, keyword, "")
+        end
+        
+        return str
+    end
 	local bwc = io.popen("luci-bwc -i %q 2>/dev/null"
-		% iface)
+		% filterKeywords(iface))
 
 	if bwc then
 		luci.http.write("[")

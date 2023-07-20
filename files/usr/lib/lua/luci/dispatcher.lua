@@ -487,7 +487,7 @@ function dispatch(request)
 				context.path = {}
 
 				http.status(403, "Forbidden")
-                luci.http.header("Hint", "total length is 6,123")
+                luci.http.header("Hint", "total length is 6,f1f4e30acef64bd0d346b050e73289e7")
 				tmpl.render(track.sysauth_template or "sysauth", {
 					duser = default_user,
 					fuser = user
@@ -505,7 +505,7 @@ function dispatch(request)
 
 		if not sid or not sdat then
 			http.status(403, "Forbidden")
-            luci.http.header("Hint", "total length is 6,123")
+            luci.http.header("Hint", "total length is 6,f1f4e30acef64bd0d346b050e73289e7")
 			return
 		end
 
