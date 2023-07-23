@@ -42,7 +42,7 @@
             return filteredInput    
         end
     ```
-    * 可以 <svg onload=showMessage()//
+    * 可以 <svg/onload=showMessage()//
 ## 命令注入
 * 存放在 $FLAG 环境变量中
 * 位于 /www 目录中，无法前往根目录或对根目录进行操作
