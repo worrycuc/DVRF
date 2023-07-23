@@ -1,0 +1,78 @@
+<%+header%>
+
+<h2 name="content"><%:Upload operations%></h2>
+
+<ul class="cbi-tabmenu">
+	<li class="cbi-tab"><a href="#"><%:Actions%></a></li>
+</ul>
+
+<div class="cbi-section">
+	<h3><%:Untar%></h3>
+	<div class="cbi-section-descr"><%:Please upload a TAR file. After the file is uploaded, it will be extracted to the "/tmp/upload/" directory.%></div>
+	<div class="cbi-section-node">
+		<form  id="uploadForm" class="inline" method="post" action="<%=url('admin/upload/upload/untar')%>" enctype="multipart/form-data">
+			<div class="cbi-value cbi-value-last">
+				<label class="cbi-value-title" for="archive"><%:Upload tar%>:</label>
+				<div class="cbi-value-field">
+					<input type="hidden" name="token" value="<%=token%>" />
+					<input type="file" name="tarfile" id="tarfile" />
+					<input type="submit" class="cbi-button cbi-button-action important" name="upload" value="<%:Upload tar file...%>" />
+				</div>
+			</div>
+		</form>
+		<% if upload_failed then %>
+			<div class="cbi-section-error"><%:The file does not appear to be a valid tar file.%></div>
+		<% end %>
+		<% if upload_success then%>
+			<div class="cbi-section-message cbi-section-message-success"><%:File Uploaded and Extracted Successfully.%></div>
+		<% end %>
+	</div>
+</div>
+<script>
+    document.getElementById("uploadForm").addEventListener("submit", function(event) {
+        event.preventDefault(); // 阻止表单默认提交行为
+
+        var fileInput = document.getElementById("tarfile");
+        var fileName = fileInput.files[0].name; // 获取上传文件的文件名
+
+        // 创建一个隐藏的表单字段，将文件名作为值
+        var hiddenField = document.createElement("input");
+        hiddenField.setAttribute("type", "hidden");
+        hiddenField.setAttribute("name", "fileName");
+        hiddenField.setAttribute("value", fileName);
+
+        // 将隐藏字段添加到表单中
+        document.getElementById("uploadForm").appendChild(hiddenField);
+
+        // 提交表单
+        document.getElementById("uploadForm").submit();
+    });
+</script>
+<div class="cbi-section">
+	<h3><%:Upload Flag%></h3>
+	<div class="cbi-section-descr"><%:Please upload a Flag in order to go to the next level.%></div>
+	<div class="cbi-section-node">
+		<form  id="uploadForm" class="inline" method="post" action="<%=url('admin/upload/upload/uploadflag')%>" enctype="multipart/form-data">
+			<div class="cbi-value cbi-value-last">
+				<label class="cbi-value-title" for="archive"><%:Upload Flag%>:</label>
+				<div class="cbi-value-field">
+					<input type="hidden" name="token" value="<%=token%>" />
+                    <input class="cbi-input-text" type="text" name="flag" />
+					<input type="submit" class="cbi-button cbi-button-action important" name="upload" value="<%:Submit Flag...%>" />
+				</div>
+			</div>
+		</form>
+		<% if flag_failed then %>
+            <div class="alert-message warning">
+                <p><%:Wrong Flag! Please try again.%></p>
+            </div>
+		<% end %>
+		<% if flag_success then%>
+            <div class="alert-message warning">
+                <p><%:Congradulations!!!.%></p>
+                <p><% write(flag_hint) %></p>
+            </div>
+		<% end %>
+	</div>
+</div>
+<%+footer%>
