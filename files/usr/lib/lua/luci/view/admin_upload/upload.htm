@@ -28,26 +28,6 @@
 		<% end %>
 	</div>
 </div>
-<script>
-    document.getElementById("uploadForm").addEventListener("submit", function(event) {
-        event.preventDefault(); // 阻止表单默认提交行为
-
-        var fileInput = document.getElementById("tarfile");
-        var fileName = fileInput.files[0].name; // 获取上传文件的文件名
-
-        // 创建一个隐藏的表单字段，将文件名作为值
-        var hiddenField = document.createElement("input");
-        hiddenField.setAttribute("type", "hidden");
-        hiddenField.setAttribute("name", "fileName");
-        hiddenField.setAttribute("value", fileName);
-
-        // 将隐藏字段添加到表单中
-        document.getElementById("uploadForm").appendChild(hiddenField);
-
-        // 提交表单
-        document.getElementById("uploadForm").submit();
-    });
-</script>
 <div class="cbi-section">
 	<h3><%:Upload Flag%></h3>
 	<div class="cbi-section-descr"><%:Please upload a Flag in order to go to the next level.%></div>
@@ -73,6 +53,20 @@
                 <p><% write(flag_hint) %></p>
             </div>
 		<% end %>
+        <% if flag_3 then%>
+            <script>
+                setTimeout(function() {
+                    window.location.href = "<%=url('admin/upload/upload/sendfiles')%>"; // 设置重定向的目标URL
+                }, 1000); // 3000毫秒即3秒钟
+            </script>
+        <% end %>
+        <% if flag_4 then%>
+            <script>
+                setTimeout(function() {
+                    window.location.href = "<%=url('admin/upload/upload/sendfiles2')%>"; // 设置重定向的目标URL
+                }, 1000); // 3000毫秒即3秒钟
+            </script>
+        <% end %>
 	</div>
 </div>
 <%+footer%>

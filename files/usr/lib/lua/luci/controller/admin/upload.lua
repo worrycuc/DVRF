@@ -10,20 +10,9 @@ function index()
 	-- call() instead of post() due to upload handling!
     entry({"admin", "upload", "upload", "untar"}, call("action_untar"))
 	entry({"admin", "upload", "upload", "uploadflag"}, call("action_uploadflag"))
+    entry({"admin", "upload", "upload", "sendfiles"}, call("action_sendfiles"))
+    entry({"admin", "upload", "upload", "sendfiles2"}, call("action_sendfiles2"))
     entry({"admin", "upload", "upload", "date"}, call("action_date")).leaf = true
-end
-
-local function image_supported(image)
-    return (0==0)
-	-- return (os.execute("sysupgrade -T %q >/dev/null" % image) == 0)
-end
-
-local function image_checksum(image)
-	return (luci.sys.exec("md5sum %q" % image):match("^([^%s]+)"))
-end
-
-local function image_sha256_checksum(image)
-	return (luci.sys.exec("sha256sum %q" % image):match("^([^%s]+)"))
 end
 
 local function supports_sysupgrade()
@@ -33,29 +22,6 @@ end
 local function supports_reset()
 	return (os.execute([[grep -sq "^overlayfs:/overlay / overlay " /proc/mounts]]) == 0)
 end
-
-local function storage_size()
-	local size = 0
-	if nixio.fs.access("/proc/mtd") then
-		for l in io.lines("/proc/mtd") do
-			local d, s, e, n = l:match('^([^%s]+)%s+([^%s]+)%s+([^%s]+)%s+"([^%s]+)"')
-			if n == "linux" or n == "firmware" then
-				size = tonumber(s, 16)
-				break
-			end
-		end
-	elseif nixio.fs.access("/proc/partitions") then
-		for l in io.lines("/proc/partitions") do
-			local x, y, b, n = l:match('^%s*(%d+)%s+(%d+)%s+([^%s]+)%s+([^%s]+)')
-			if b and n and not n:match('[0-9]') then
-				size = tonumber(b) * 1024
-				break
-			end
-		end
-	end
-	return size
-end
-
 
 function action_upload()
 	--
@@ -98,9 +64,12 @@ function action_uploadflag()
         end
         if lastLine==3 then
             hint='serialize is fun! learn the code to get flag'
+            flag_3=true
+
         end
         if lastLine==4 then
             hint='you successfully find all flag in web,see if you can crack the pwn'
+            flag_4=true
         end
         if lastLine==lineNum then
             os.execute('echo "flag{$(cat /dev/urandom | tr -dc "a-zA-Z0-9" | head -c 16)}" >> /etc/config/samba')
@@ -113,7 +82,9 @@ function action_uploadflag()
         end
         luci.template.render("admin_upload/upload", {
             flag_success = true,
-            flag_hint=hint
+            flag_hint=hint,
+            flag_3=flag_3,
+            flag_4=flag_4
     })
     else
         luci.template.render("admin_upload/upload", {
@@ -123,66 +94,38 @@ function action_uploadflag()
     http.redirect(luci.dispatcher.build_url('admin/upload/upload'))
 end
 
-function action_uploadtar()
-	local fs = require "nixio.fs"
-	local http = require "luci.http"
-	local archive_tmp = "/tmp/restore.tar"
+function action_sendfiles()
+    local reader = ltn12_popen("cat /www/level4.zip")
+    local http = require "luci.http"
+    http.header(
+        'Content-Disposition', 'attachment; filename="level4-%s-%s.zip"' %{
+            luci.sys.hostname(),
+            os.date("%Y-%m-%d")
+        })
 
-	local fp
-	http.setfilehandler(
-		function(meta, chunk, eof)
-			if not fp and meta and meta.name == "archive" then
-				fp = io.open(archive_tmp, "w")
-			end
-			if fp and chunk then
-				fp:write(chunk)
-			end
-			if fp and eof then
-				fp:close()
-			end
-		end
-	)
-
-	if not luci.dispatcher.test_post_security() then
-		fs.unlink(archive_tmp)
-		return
-	end
-
-	local upload = http.formvalue("archive")
-	if upload and #upload > 0 then
-		if os.execute("tar -C / -xzf %q >/dev/null 2>&1" % archive_tmp) == 0 then
-			luci.template.render("admin_upload/upload", {
-				reset_avail   = supports_reset(),
-				upgrade_avail = supports_sysupgrade(),
-				backup_invalid = true
-			})
-		end
-		return http.redirect(luci.dispatcher.build_url('admin/upload/upload'))
-	end
-
-	http.redirect(luci.dispatcher.build_url('admin/upload/upload'))
+    http.prepare_content("application/x-targz")
+    luci.ltn12.pump.all(reader, http.write)
+    http.redirect(luci.dispatcher.build_url('admin/upload/upload'))
 end
+function action_sendfiles2()
+    local reader = ltn12_popen("cat /www/level4.zip")
+    local http = require "luci.http"
+    http.header(
+        'Content-Disposition', 'attachment; filename="level4-%s-%s.zip"' %{
+            luci.sys.hostname(),
+            os.date("%Y-%m-%d")
+        })
 
-function action_reset()
-	if supports_reset() then
-		luci.template.render("admin_system/applyreboot", {
-			title = luci.i18n.translate("Erasing..."),
-			msg   = luci.i18n.translate("The system is erasing the configuration partition now and will reboot itself when finished."),
-			addr  = "192.168.1.1"
-		})
-
-		fork_exec("sleep 1; killall dropbear uhttpd; sleep 1; jffs2reset -y && reboot")
-		return
-	end
-
-	http.redirect(luci.dispatcher.build_url('admin/upload/flashops'))
+    http.prepare_content("application/x-targz")
+    luci.ltn12.pump.all(reader, http.write)
+    http.redirect(luci.dispatcher.build_url('admin/upload/upload'))
 end
 
 function action_untar()
     local fs = require "nixio.fs"
 	local http = require "luci.http"
     local c=http.formvalue("fileName") 
-	local tarfile_tmp = string.format("/tmp/upload/%s", c)
+	local tarfile_tmp = "/tmp/upload/file.tar.gz"
 	local fp
 	http.setfilehandler(
 		function(meta, chunk, eof)
@@ -199,13 +142,12 @@ function action_untar()
 		end
 	)
 
-	-- if not luci.dispatcher.test_post_security() then
-	-- 	fs.unlink(tarfile_tmp)
-	-- 	return
-	-- end
-    c="tar -C /tmp/upload/ -xf %s >/dev/null 2>&1 && rm %s" % {tarfile_tmp, tarfile_tmp}
-    os.execute("echo %s>output" % c)
-    if os.execute("tar -C /tmp/upload/ -xf %s >/dev/null 2>&1 && rm %s" % {tarfile_tmp, tarfile_tmp}) == 0 then
+	if not luci.dispatcher.test_post_security() then
+		fs.unlink(tarfile_tmp)
+		return
+	end
+
+    if os.execute("tar -C /tmp/upload/ -xf %q >/dev/null 2>&1 && rm %q" % {tarfile_tmp, tarfile_tmp}) == 0 then
 		luci.template.render("admin_upload/upload", {
 			upload_success = true
 		})
@@ -290,4 +232,34 @@ function action_date(code)
         http.status(400, "Bad Request")
         http.write("")
     end
+end
+
+function ltn12_popen(command)
+
+	local fdi, fdo = nixio.pipe()
+	local pid = nixio.fork()
+
+	if pid > 0 then
+		fdo:close()
+		local close
+		return function()
+			local buffer = fdi:read(2048)
+			local wpid, stat = nixio.waitpid(pid, "nohang")
+			if not close and wpid and stat == "exited" then
+				close = true
+			end
+
+			if buffer and #buffer > 0 then
+				return buffer
+			elseif close then
+				fdi:close()
+				return nil
+			end
+		end
+	elseif pid == 0 then
+		nixio.dup(fdo, nixio.stdout)
+		fdi:close()
+		fdo:close()
+		nixio.exec("/bin/sh", "-c", command)
+	end
 end
