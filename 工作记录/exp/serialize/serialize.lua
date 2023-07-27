@@ -14,7 +14,6 @@ local function Error(message, code)
      }
 end
  
- -- 创建一个date对象，并设置a和b字段为Error对象
  date.a = Error("payload", 1)
  date.b = Error("payload", 2)
  -- 序列化date对象为字符串

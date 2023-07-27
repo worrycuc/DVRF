@@ -1,15 +1,6 @@
 import subprocess
 import requests
 import argparse
-# 执行Lua文件并获取输出
-# def run_lua_file(lua_file):
-
-#     # 创建Lua解释器实例
-#     L = lua.LuaRuntime()
-
-#     # 执行index.lua脚本
-#     output=L.execute('dofile("%s")' % lua_file)
-#     return output
 
 def exploit(args):
 
